@@ -22,11 +22,11 @@ const Navbar = () => {
     const location = useLocation();
 
     const navItems = [
-        { name: "SLIDER", path: "/" },
+        { name: "INQUIRIES", path: "/" },
+        { name: "SLIDER", path: "/slider" },
         { name: "TESTIMONIAL", path: "/testimonial" },
         { name: "SERVICES", path: "/services" },
         { name: "PROJECTS", path: "/projects" },
-        { name: "INQUIRIES", path: "/inquiries" }
     ];
 
     return (
