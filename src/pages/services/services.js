@@ -22,8 +22,10 @@ const initialValues = {
     subTitle: "",
     description: "",
     keyPoints: [""],
+    subDescription: "",
     faqs: [{ question: "", answer: "" }],
-    images: []
+    images: [],
+    iconImage: null
 }
 const Services = () => {
     const [allServices, setAllServices] = useState([]);
@@ -89,9 +91,11 @@ const Services = () => {
             title: service.title,
             subTitle: service.subTitle,
             description: service.description,
+            subDescription: service.subDescription || "",
             keyPoints: service.keyPoints || [""],
             faqs: service.faqs || [{ question: "", answer: "" }],
-            images: service.images || []
+            images: service.images || [],
+            iconImage: service.iconImage || null
         });
         setEditId(service._id);
         setSelectedImages(service.images);
@@ -108,6 +112,13 @@ const Services = () => {
 
         setSelectedImages([...selectedImages, ...imageUrls]);
     };
+    const handleIconImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFormData({ ...formData, iconImage: URL.createObjectURL(file) });
+        }
+    };
+
 
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this service?")) return;
@@ -128,10 +139,23 @@ const Services = () => {
 
         const data = new FormData();
         data.append("title", formData.title);
-        data.append("description", formData.description);
         data.append("subTitle", formData.subTitle);
+        data.append("description", formData.description);
+        data.append("subDescription", formData.subDescription);
         data.append("keyPoints", JSON.stringify(formData.keyPoints));
         data.append("faqs", JSON.stringify(formData.faqs));
+
+        if (formData.iconImage) {
+            if (formData.iconImage.startsWith("blob:")) {
+                const response = await fetch(formData.iconImage);
+                const blob = await response.blob();
+
+                data.append("iconImage",new File([blob], `iconImage.jpg`, { type: blob.type }));
+            } else {
+                data.append("iconImage", formData.iconImage);
+            }
+        }
+
         const imageFiles = await Promise.all(
             selectedImages.map(async (image, index) => {
                 if (image.startsWith("blob:")) {
@@ -150,7 +174,7 @@ const Services = () => {
             } else {
                 await axios.post(API_URL, data);
             }
-            setFormData({ title: "", subTitle: "", description: "", keyPoints: [""], faqs: [{ question: "", answer: "" }], images: [] });
+            setFormData(initialValues);
             setSelectedImages([]);
             setEditId(null);
             fetchServices();
@@ -160,6 +184,7 @@ const Services = () => {
         }
         setLoading(false);
     };
+
 
     return (
         <Container maxWidth="lg" sx={{ marginTop: 4 }}>
@@ -186,6 +211,20 @@ const Services = () => {
                     <form onSubmit={handleSubmit}>
                         <Grid container spacing={2}>
                             <Grid item xs={12}>
+                                <Typography variant="body1" fontWeight="bold">Upload Icon Image:</Typography>
+                                <Button variant="contained" component="label" sx={{ mt: 1 }}>
+                                    Upload Icon
+                                    <input type="file" hidden onChange={handleIconImageUpload} />
+                                </Button>
+                            </Grid>
+
+                            {formData.iconImage && (
+                                <Grid item xs={12} sx={{  mt: 2 }}>
+                                    <Typography variant="body2">Icon Preview:</Typography>
+                                    <img src={formData.iconImage} alt="Icon" width="80px" height="80px" style={{ borderRadius: 8 }} />
+                                </Grid>
+                            )}
+                            <Grid item xs={12}>
                                 <TextField name="title" label="Title" fullWidth value={formData.title} onChange={handleChange} />
                             </Grid>
                             <Grid item xs={12}>
@@ -193,6 +232,17 @@ const Services = () => {
                             </Grid>
                             <Grid item xs={12}>
                                 <TextField name="description" label="Description" multiline rows={4} fullWidth value={formData.description} onChange={handleChange} />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    name="subDescription"
+                                    label="Sub Description"
+                                    multiline
+                                    rows={2}
+                                    fullWidth
+                                    value={formData.subDescription}
+                                    onChange={handleChange}
+                                />
                             </Grid>
                             <Grid item xs={12}>
                                 <Typography variant="body1" fontWeight="bold">Upload Images:</Typography>
